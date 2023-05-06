@@ -161,3 +161,233 @@ Il coefficiente di variazione(cv) ha valore circa 1.041928, ed è dato dal rappo
 L'indice di asimmetria(y) è uguale circa a 2.389791 e indica se il grafico è simmetrico o meno. Nel nostro caso abbiamo asimmetria positiva poiché il valore è maggiore di 0, ciò indica che per valori alti in metri cubi di erogazione dell'acqua vi è una bassa concentrazione di dati e quindi il grafico avrà una coda più lunga a destra.
 
 L'indice di curtosi(k) vale 8.11013, utile per stabilire se la distribuzione è poco o molto appiattita. Nel nostro caso, essendo maggiore di 0, abbiamo che i dati hanno distribuzione leptocurtica ovvero è presente un eccesso di dati nelle classi centrali e quindi il grafico sarà poco appiattito.
+
+# Raggruppamento in classi con calcolo frequenze assolute e relative
+```{r}
+
+#costante che indica il numero di livelli
+K <- 8
+K
+
+
+#dividere il range di dati in livelli equidistanti
+delta<-range_var/K
+delta
+
+
+#calcolo degli estremi degli intervalli
+xSup <- rep(0 , K)
+xInf <- rep(0 , K)
+xmin <- min(finale$ACQ_EROG)
+for (i in 1:K){
+   xInf[i]   <-   xmin + {i-1} * delta
+   xSup[i]   <-   xmin + i * delta
+}
+
+Intervalli <- cbind(LimiteInferiore = xInf,    LimiteSuperiore = xSup)
+Intervalli<-round(Intervalli)
+Intervalli
+
+
+
+#vettore degli intervalli per effettuare la divisione
+x<-c(92,1415,2738,4060,5383,6706,8028,8351,10675)
+z<-c('[92,1415]', '[1415,2738]', '[2738,4060]', '[4060,5383]', '[5383,6706]', '[6706,8028]', '[8028,8351]', '[8351,10675]')
+
+
+#tabella divisa in classi
+tab_classi <- cut(finale$ACQ_EROG, breaks = x,right = FALSE,labels = z)
+tab_classi
+
+
+#Frequenze assolute delle classi
+freq_ass_class<-table(tab_classi)
+freq_ass_class
+
+#Frequenze relative delle classi
+freq_rel_class<-freq_ass_class/sum(freq_ass_class)
+freq_rel_class
+
+#Frequenze assolute cumulative delle classi 
+freq_ass_cum_class<-cumsum(freq_ass_class)
+freq_ass_cum_class
+
+#Frequenze relative cumulative delle classi 
+freq_rel_cum_class<-cumsum(freq_rel_class)
+freq_rel_cum_class
+
+#tabella delle frequenze assolute e relative per classi
+tabella_freq_classi<-cbind(freq_ass_class,freq_rel_class,freq_ass_cum_class,freq_rel_cum_class)
+tabella_freq_classi
+
+#grafico a barre per classi
+barplot(freq_ass_class,
+        main = 'Bar plot',
+        xlab = 'Acqua erogata dai comuni divisa in classi', 
+        ylab = 'Frequenze assolute delle classi')
+
+#grafico ad aste per classi
+plot(freq_ass_class,
+     main = 'Line graph',
+     xlab = 'Acqua erogata dai comuni divisa in classi',
+     ylab = 'Frequenze assolute delle classi')
+
+#grafico a linee per classi
+plot(freq_ass_class,
+     main = "Polygon graph",
+     type = "b",
+     xlab = "Acqua erogata dai comuni divisa in classi",
+     ylab = "Frequenze assolute delle classi")
+
+
+#grafico a torta per classi
+
+
+pie(freq_ass_class,
+    main = 'Pie chart',
+    col = rainbow(length(freq_ass_class)),
+    labels = "")
+    
+legend('topright', cex = 0.9, legend = z, fill = rainbow(length(freq_ass_class)))
+
+#istogramma per classi
+hist(finale$ACQ_EROG, main = 'Istogramma',xlab = 'Acqua erogata dai comuni divisa in classi',
+     ylab = 'densità', breaks = x)
+
+
+```
+
+
+
+
+
+Per la divisione in classi abbiamo utilizzato un numero di livelli(K) pari a 8.
+
+Abbiamo calcolato una costante(delta) che indica il range di una classe.
+
+Grazie a questa costante, siamo riusciti a calcolare gli estremi degli 8 intervalli(Intervalli).
+
+Abbiamo diviso la tabella in classi(tab_classi) e calcolato le sue frequenze(freq_ass_class, freq_rel_class, freq_ass_cum_class, freq_rel_cum_class).
+
+Infine, abbiamo realizzato i grafici corrispondenti alle frequenze assolute della tabella delle classi.
+
+L'istogramma è stato realizzato per visualizzare l'andamento della distribuzione delle acque erogate dai comuni. 
+
+Dunque, si può dedurre da tutti i grafici rappresentati che abbiamo molti comuni con un valore basso di acque erogate da esso e pochi che hanno un valore alto di acque erogate dovuto soprattutto dalla grandezza del comune e dalla quantità di acqua che serve ai cittadini.
+
+
+
+# Quartili, scarto interquartile e boxplot
+```{r}
+
+#primo quartile
+q1 <- quantile(finale$ACQ_EROG, probs=0.25)
+q1
+
+#secondo quartile o mediana
+q2 <- quantile(finale$ACQ_EROG, probs=0.5)
+q2
+
+#terzo quartile
+q3 <- quantile(finale$ACQ_EROG, probs=0.75)
+q3
+
+#scarto interquartile 
+iqr <- q3-q1
+iqr <- substr(iqr,1,9)
+iqr
+
+ggplot(data = finale, mapping = aes(x=ACQ_EROG))+geom_boxplot()+
+   labs(title = 'Box Plot', x = 'Acqua erogata dai comuni')
+
+
+
+
+```
+
+
+
+il percentile k-esimo di un campione di dati è un valore maggiore di una percentuale k dei dati, e minore della restante percentuale 100-k, dove k è un numero compreso tra 0 e 100. Il 25-esimo percentile si definisce primo quartile, il 50-esimo percentile si definisce mediana campionaria o secondo quartile, il 75-esimo percentile si dice terzo quartile e si denotano con Q1, Q2 e Q3. 
+Nel nostro caso Q1 vale 531(q1), Q2 vale 1022(q2, come la mediana) e Q3 vale 2054(q3).
+
+
+Uno strumento grafico utile a visualizzare alcuni degli indici rappresentativi dei dati è il box plot.
+Si ottiene sovrapponendo ad una linea orizzontale che va dal minore al maggiore dei dati, un rettangolo che va dal primo al terzo quartile, con una linea verticale che lo divide al livello del secondo quartile.
+
+Lo scarto interquartile è la differenza tra Q3 e Q1 e indica la lunghezza della base del rettangolo. Nel nostro caso lo scarto interquartile vale 1523.
+
+Il fatto che la mediana rappresentata nel boxplot sia più spostata verso sinistra, conferma che la distribuzione è asimmetrica positiva. Ciò poteva essere notato anche nell'istrogramma realizzato in precedenza.
+
+Gli outliers sono dati anomali ossia molto distanti dagli altri dati, di norma sono presenti quando si ha una distribuzione con elevata curtosi. Nel nostro caso abbiamo il seguente range di valori che non sono outliers: [-992, 3577], di conseguenza ogni dato che risulta all'esterno dell'intervallo è definito outlier.
+
+
+
+# Intervalli di previsione con k=1,2,3
+```{r}
+
+#intervallo per k=1
+int1_x<-mean-sd
+int1_y<-mean+sd
+int1_x
+int1_y
+
+
+#intervallo per k=2
+int2_x<-mean-(2*sd)
+int2_y<-mean+(2*sd)
+int2_x
+int2_y
+
+
+#intervallo per k=3
+int3_x<-mean-(3*sd)
+int3_y<-mean+(3*sd)
+int3_x
+int3_y
+
+
+
+```
+Gli intervalli di previsione ci permettono di capire se il nostro campione di dati ha una distribuzione normale cioé normocurtica. Per essere tale il primo intervallo deve avere circa il 68% dei dati, il secondo intervallo deve avere circa il 95% dei dati e il terzo intervallo deve avere circa il 99.7% dei dati.
+
+Gli intervalli di previsione sono:
+[-67.90978, 3307.294] per k=1, in questo intervallo ci sono il 86.81% degli elementi totali
+[-1755.512, 4994.896] per k=2, in questo intervallo ci sono il 95.6% degli elementi totali
+[-3443.114, 6682.499] per k=3, in questo intervallo ci sono il 98.9% degli elementi totali.
+Possiamo notare, quindi, che il nostro campione di dati è fortemente sbilanciato e si dice skewed (ossia asimmetrico).
+
+
+
+
+# Dati bivariati e coefficiente di correlazione campionario
+```{r}
+
+#diagramma a dispersione, con x_i=ACQ_IMM e y_i = ACQ_EROG
+ggplot(data = finale, mapping = aes(x=ACQ_IMM,y=ACQ_EROG))+geom_point()+
+   labs(title = 'Scatter Plot', y = 'Acqua erogata dai comuni', x = 'Acqua immessa nei comuni')
+
+#coefficiente di correlazione campionario
+r<-cor(finale$ACQ_EROG,finale$ACQ_IMM)
+r
+
+```
+
+
+
+Un campione bivariato è un campione che non tratta dati singoli ma coppie di dati. Uno strumento utile a visualizzare campioni bivariati è il diagramma a dispersione(Scatter Plot), che consiste nella rappresentazione sul piano cartesiano di tanti punti quante sono le osservazioni (xi, yi), ognuno tracciato nella corrispondente coordinata.
+
+Un valore che permette di capire se i dati sono correlati positivamente o negativamente è il coefficiente di correlazione campionario(r), che nel nostro caso vale 0.9153466 ed è un valore prossimo a 1.
+
+Se r>0 allora i dati sono positivamente correlati altrimenti sono negativamente correlati, quindi i dati sono positivamente correlati. 
+
+Notiamo, inoltre, che |r| è prossimo a 1, dunque vi è una relazione lineare perfetta e quindi i punti del diagramma di dispersione stanno tutti su una retta. Infine possiamo affermare che nel nostro grafico i dati sono positivamente correlati dunque all'aumentare dell'acqua immessa nei comuni aumenterà l'acqua erogata dai comuni.
+
+
+
+
+
+
+
+
+Realizzato da:
+D'Antuono Francesco Paolo (0512109798), Vitale Ciro (0512110719).
