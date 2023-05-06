@@ -1,0 +1,163 @@
+---
+title: "PROGETTO CPSM"
+author: "Francesco Paolo D'Antuono (0512109798), Ciro Vitale (0512110719)"
+date: "22/06/2022"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+    
+---
+
+
+# Caricamento librerie
+```{r,warning=FALSE}
+library(readxl)
+library(tidyverse)
+
+```
+Caricamento delle librerie che ci serviranno per l'analisi.
+
+
+# Importazione del dataset e selezione dati opportuni
+```{r}
+#lettura del file csv
+datacqua<-read.csv('acqua.csv',header = TRUE,sep = ',')
+datacqua
+
+#selezione delle colonne interessate all'analisi
+new_data<-select(datacqua,Territorio,TIPO_DATO4,Value)
+new_data
+
+#riposizionamento delle colonne nel modo corretto
+finale<-spread(new_data,TIPO_DATO4,Value)
+
+
+#rimozione Napoli dalla tabella
+finale<-filter(finale,Territorio != 'Napoli')
+finale
+```
+Abbiamo importato il dataset scaricato da istat.it, in formato csv (acqua.csv). Esso riguarda l'erogazione e immissione da/nei comuni di acqua potabile nel 2018. Inoltre, abbiamo selezionato le variabili che ci interessano per l'analisi nel dataset new_data, in seguito abbiamo corretto alcune informazioni e selezionato le colonne opportune mendiante la funzione spread per ottimizzare il dataset e ricavarne solo i dati che vogliamo analizzare dal csv. Successivamente, abbiamo rimosso dal dataset la riga che riguardava il comune di Napoli poiché era un dato esageratamente distante dagli altri comuni e arrecava problemi all'analisi del campione.
+
+
+
+# Selezione di un campione unidimensionale con tabella delle frequenze assolute e relative su di esso
+```{r}
+
+#Frequenza assoluta
+freq_ass<-table(finale$ACQ_EROG)
+freq_ass
+
+#Frequenza relativa
+freq_rel<-freq_ass/sum(freq_ass)
+freq_rel
+
+#Frequenza assoluta cumulativa 
+freq_ass_cum<-cumsum(freq_ass)
+freq_ass_cum
+
+#Frequenza relativa cumulativa 
+freq_rel_cum<-cumsum(freq_rel)
+freq_rel_cum
+
+#tabella delle frequenze relative e assolute
+tabella<-cbind(freq_ass,freq_rel,freq_ass_cum,freq_rel_cum)
+tabella
+
+
+```
+Le modalità snno i valori distinti assunti dai dati che permettono il calcolo delle frequenze.
+Ci sono vari tipi di frequenze: 
+La tabella delle frequenze assolute(freq_ass) rappresenta il numero di dati nel campione che hanno stessa modalità.
+La tabella delle frequenze relative(freq_rel) è il rapporto tra la frequenza assoluta e l'ampiezza del campione per ogni dato.
+La tabella delle frequenze cumulative assolute(freq_ass_cum) è la somma delle frequenze assolute delle modalità.
+La tabella delle frequenze cumulative relative rappresenta la somma delle frequenze relative delle modalità.
+
+Si può notare dalle tabelle che le informazioni sono troppo simili e non ci permettono di avere un'analisi coerente dei dati per quanto riguarda le frequenze, poiché abbiamo quasi tutte le modalità differenti, quindi si procederà con il raggruppamento in classi.
+
+
+
+# Calcolo indici di posizione, variabilità e forma
+```{r}
+#mediana
+median<-median(finale$ACQ_EROG)
+median
+
+#media
+mean<-mean(finale$ACQ_EROG)
+mean
+
+
+#moda
+mode <- function(v) {
+   tmp <- unique(v)
+   tmp[which.max(tabulate(match(v, tmp)))]
+}
+
+mode<-mode(finale$ACQ_EROG)
+mode
+
+#valore minimo
+min<-min(finale$ACQ_EROG)
+min
+
+#valore massimo
+max<-max(finale$ACQ_EROG)
+max
+
+
+#varianza 
+var<-sum( {finale$ACQ_EROG - mean}^2 )  / {length(finale$ACQ_EROG)-1}
+var
+
+
+#deviazione standard
+sd<-sqrt(var)
+sd
+
+#ampiezza del campo di variazione
+range_var<-max-min
+range_var
+
+#scarto medio assoluto
+mean_abs_dev<-sum(abs(finale$ACQ_EROG - mean))  / length(finale$ACQ_EROG)
+mean_abs_dev
+
+#coefficiente di variazione
+cv<-sd/mean
+cv
+
+#indice di asimmetria
+y<-sum({finale$ACQ_EROG - mean}^3) /  (length(finale$ACQ_EROG) * {sd}^3) 
+y
+
+#indice di curtosi
+k<-(sum({finale$ACQ_EROG - mean}^4) /  (length(finale$ACQ_EROG) * {sd}^4)) - 3
+k
+
+```
+## Indici di posizione.
+
+Il valore medio(mean) della distribuzione dell'acqua erogata è 1619.692, la mediana(median) è 1022, la moda(mode) è 690.
+
+Il minimo(min) corrisponde al comune di Liveri con valore 92 , il massimo(max) corrisponde al comune di Pozzuoli con valore 10674.
+
+
+## Indici di varianza.
+
+La varianza(var) è 2848001, questo ci fa capire quanto i dati siano dispersi attorno alla media campionaria.
+
+La deviazione standard(sd) ha valore 1687.602, questo risultato ci conferma che i valori sono dispersi rispetto alla media campionaria.
+
+L'ampiezza del campo di variazione(range_var) vale 10582, indica il numero di valori che stiamo esaminando ed è data dalla differenza tra gli estremi del campione.
+
+Lo scarto medio assoluto(mean_abs_dev) è 1185.38, dato dalla media aritmetica degli scarti assoluti della media campionaria.
+
+Il coefficiente di variazione(cv) ha valore circa 1.041928, ed è dato dal rapporto tra deviazione standard e media campionaria. Esso è un indice diretto della variabilità dei dati, indipendentemente dalla scala di misura che si adopera.
+
+
+## Indici di forma.
+
+L'indice di asimmetria(y) è uguale circa a 2.389791 e indica se il grafico è simmetrico o meno. Nel nostro caso abbiamo asimmetria positiva poiché il valore è maggiore di 0, ciò indica che per valori alti in metri cubi di erogazione dell'acqua vi è una bassa concentrazione di dati e quindi il grafico avrà una coda più lunga a destra.
+
+L'indice di curtosi(k) vale 8.11013, utile per stabilire se la distribuzione è poco o molto appiattita. Nel nostro caso, essendo maggiore di 0, abbiamo che i dati hanno distribuzione leptocurtica ovvero è presente un eccesso di dati nelle classi centrali e quindi il grafico sarà poco appiattito.
